@@ -23,27 +23,35 @@ int main(int argc, char* argv[]){
 	int read_cnt;
 
 	struct sockaddr_in serv_addr, clnt_addr;
-	
+	socklen_t clnt_addr_size;
 	if(argc != 2){
 		printf("Usage: %s <port>\n", argv[0]);
 		exit(1);
 	}
 	fp = fopen("file_server.c", "rb");
 	serv_sd = socket(PF_INET, SOCK_STREAM, 0);
+	if(serv_sd == -1){
+		error_handling("socket() error");
+	}
 
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(atoi(argv[0]));
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
+	serv_addr.sin_port = htons(atoi(argv[1]));
 
-	auto ret = bind(serv_sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-	if(ret != 0){
-		error_handling("bind error!");
+	if(bind(serv_sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1){
+		error_handling("bind() error");
 	}
-	listen(serv_sd, 5);
+	if(listen(serv_sd, 5) == -1){
+		error_handling("listen() error");
+	}
 
-	clnt_sd = accept(serv_sd, (struct sockaddr*)&clnt_addr, sizeof(clnt_addr));
-	
+	clnt_addr_size = sizeof(clnt_addr);
+	printf("start:\n");
+	clnt_sd = accept(serv_sd, (struct sockaddr*)&clnt_addr,&clnt_addr_size); 
+	if(clnt_sd == -1){
+		error_handling("accept() error");
+	}
 	while(1){
 		read_cnt = fread((void*)buf, 1, BUF_SIZE, fp);
 		printf("read_cnt:%d \n", read_cnt);
